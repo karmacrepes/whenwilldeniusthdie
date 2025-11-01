@@ -1,9 +1,65 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  --paper-ink: #2b2b2b;
+  --paper-accent: #7a1e0a;
+  --paper-gold: #b3862b;
+  --paper-sepia-1: #f6f0e4;
+  --paper-sepia-2: #efe6d7;
+  --paper-sepia-3: #e8dcc8;
+  color-scheme: light;
 }
 
 html, body, #root { height: 100%; }
+
+@layer base {
+  html { font-family: Lora, ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
+  h1, h2, h3, .display-serif { font-family: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
+  body { color: var(--paper-ink); }
+}
+
+.paper-bg {
+  background:
+    radial-gradient(1200px 500px at 50% -10%, var(--paper-sepia-1), transparent 60%),
+    radial-gradient(800px 300px at 0% 0%, var(--paper-sepia-2), transparent 60%),
+    radial-gradient(800px 300px at 100% 0%, var(--paper-sepia-2), transparent 60%),
+    linear-gradient(180deg, var(--paper-sepia-1), var(--paper-sepia-3));
+}
+
+.paper-card {
+  background: linear-gradient(180deg, #f9f4ea, #f2e7d5);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow:
+    0 6px 20px rgba(0,0,0,0.08),
+    0 1px 0 rgba(255,255,255,0.8) inset;
+}
+
+.hr-quill {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--paper-gold), transparent);
+}
+
+.dropcap:first-letter{
+  float: left;
+  font-family: "Playfair Display";
+  font-size: 3.2rem;
+  line-height: 1;
+  padding-right: .25rem;
+  color: var(--paper-accent);
+}
+
+.btn-primary {
+  @apply inline-flex items-center gap-2 rounded-md px-4 py-2 border transition;
+  background: #fff4e5;
+  border-color: rgba(0,0,0,0.1);
+}
+.btn-primary:hover { background: #ffefd6; }
+.btn-ghost {
+  @apply inline-flex items-center gap-2 rounded-md px-3 py-2 border transition;
+  background: #f7f0e3;
+  border-color: rgba(0,0,0,0.06);
+}
+.btn-ghost:hover { background: #efe6d7; }
