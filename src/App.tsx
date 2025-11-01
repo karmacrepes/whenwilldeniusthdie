@@ -1,14 +1,15 @@
+
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Skull,
-  Dice5,
+  Feather,
   Share2,
-  RefreshCw,
-  Calendar as CalendarIcon,
+  BookOpen,
   Swords,
+  Calendar as CalendarIcon,
   Sparkles,
-  Info,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -21,12 +22,9 @@ import {
   ReferenceLine,
 } from "recharts";
 
-// ---------------------------------------------
-// whenwilldeniutshdie.com — playful single-file app
-// No spoilers. No malice. Just RNG-driven, affectionate parody.
-// ---------------------------------------------
+/** Innworld‑styled RNG prophecy generator for Deniusth (spoilers allowed) **/
 
-// Seeded RNG helpers (deterministic, shareable)
+// Seeded RNG helpers
 function cyrb128(str: string) {
   let h1 = 1779033703,
     h2 = 3144134277,
@@ -57,72 +55,55 @@ function makeRng(seedStr: string) {
   const [a] = cyrb128(seedStr);
   return mulberry32(a);
 }
-
-function between(rng: () => number, min: number, max: number) {
-  return Math.floor(rng() * (max - min + 1)) + min;
-}
-
-function pick<T>(rng: () => number, arr: T[]): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function pad(n: number) {
-  return n.toString().padStart(2, "0");
-}
-
-function fmtDate(d: Date) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function getQuerySeed(): string | null {
+const between = (rng: () => number, min: number, max: number) =>
+  Math.floor(rng() * (max - min + 1)) + min;
+const pick = <T,>(rng: () => number, arr: T[]): T =>
+  arr[Math.floor(rng() * arr.length)];
+const pad = (n: number) => n.toString().padStart(2, "0");
+const fmtDate = (d: Date) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const getQuerySeed = () => {
   if (typeof window === "undefined") return null;
   const url = new URL(window.location.href);
   return url.searchParams.get("seed");
-}
-
-function setQuerySeed(seed: string) {
+};
+const setQuerySeed = (seed: string) => {
   if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
   url.searchParams.set("seed", seed);
   window.history.replaceState({}, "", url.toString());
-}
+};
 
-// Silly, spoiler-safe causes (non-graphic, affectionate)
-const CAUSES = [
-  "outlives everyone by pure stubbornness (never)",
-  "misreads a prophecy; prophecy leaves in protest",
-  "duels a weather pattern and wins — retirement ensues",
-  "critical failure while dramatically pointing at a map",
-  "plot armor upgrade patches in; devs forget to nerf it",
-  "caught by a scheduling conflict with destiny",
-  "slips on a cursed banana in a very serious meeting",
-  "loses a staring contest with a Door (the Door wins)",
-  "trips over foreshadowing in chapter three thousand",
-  "retires to open a tiny sea-salt and chess café",
-  "becomes a recurring metaphor; corporeal form optional",
-  "paper cut from an epic contract (heals instantly, phew)",
-  "vanishes into a side quest that became a franchise",
-  "absconds with the soundtrack; story pauses respectfully",
-  "goes fishing, befriends the storm, forgets to perish",
+// Innworld‑flavored causes (some with spoilers from New Lands arc)
+type Cause = { text: string; spoiler?: boolean };
+const CAUSES: Cause[] = [
+  // Light/no‑spoiler Innworld vibes
+  { text: "Refuses to retire; accountant raises Named‑Rank premiums until even fate gives up." },
+  { text: "Duelist of Strings challenges a literal fate‑thread; becomes a metaphor and wanders off." },
+  { text: "Scrying crash mid‑aria; error code: 'Destiny Not Found'." },
+  { text: "Door duel. The Door wins. Eventually." },
+  { text: "Commissioned to play for a city—accidentally inspires three revolutions and leaves before taxes arrive." },
+
+  // Spoiler‑y (New Lands era and related cast)
+  { text: "Barnethei schedules ‘just one’ retirement concert at the Haven; paperwork crit fails (permanent vacation).", spoiler: true },
+  { text: "Colthei convinces him to solo during a storm on the New Lands. The storm solos back.", spoiler: true },
+  { text: "Kraken‑Eater encore, strings vs. tentacles II. This time the audience brings towels.", spoiler: true },
+  { text: "Valeterisa attempts to mathematically optimize a solo; a planar entity applauds and takes him to a seminar.", spoiler: true },
+  { text: "Mihaela, Viecel, Eldertuin, Val—er—friends throw a 'please retire' party; he narrowly survives the speeches.", spoiler: true },
+  { text: "Explorer’s Haven serves 'retire already' cake. It’s a trap: forms in triplicate.", spoiler: true },
+  { text: "New Lands mana‑drain makes the violin sullen; Deniusth declares a tactical nap measured in decades.", spoiler: true },
+  { text: "He out‑stares a Named rank, a Door, and destiny—only to trip over a dramatic entrance.", spoiler: true },
 ];
 
-// Tone badges
-const BADGES = [
-  { label: "totally scientific", class: "bg-emerald-600/15 text-emerald-400" },
-  { label: "low-spoiler", class: "bg-blue-600/15 text-blue-400" },
-  { label: "affectionate parody", class: "bg-pink-600/15 text-pink-400" },
-  { label: "rng certified", class: "bg-purple-600/15 text-purple-400" },
-];
-
-// Build a prophecy from a seed
-function buildProphecy(seed: string) {
+function buildProphecy(seed: string, spoilers: boolean) {
   const rng = makeRng(seed);
 
   const doomPercent = between(rng, 0, 100);
   const confidence = between(rng, 40, 97);
-  const cause = pick(rng, CAUSES);
 
-  // Date range: tomorrow .. 50 years from now
+  const pool = CAUSES.filter(c => spoilers || !c.spoiler);
+  const cause = pick(rng, pool).text;
+
   const now = new Date();
   const start = new Date(now);
   start.setDate(start.getDate() + 1);
@@ -132,54 +113,42 @@ function buildProphecy(seed: string) {
   const dayOffset = between(rng, 0, spanDays);
   const predicted = new Date(start.getTime() + dayOffset * 24 * 60 * 60 * 1000);
 
-  // Occasionally declare "never" because comedy
-  const never = doomPercent < 7 || /never/i.test(cause);
+  const never = doomPercent < 10 || /never/i.test(cause);
 
-  // Build 12-month risk timeline
-  const points = [] as { month: string; risk: number }[];
+  const points: { month: string; risk: number }[] = [];
   const base = doomPercent;
   for (let i = 0; i < 12; i++) {
-    // gentle wobbles
-    const wobble = Math.floor(rng() * 30) - 15; // -15..15
+    const wobble = Math.floor(rng() * 30) - 15;
     const risk = Math.max(0, Math.min(100, base + wobble + Math.sin((i / 12) * Math.PI * 2) * 10));
     const month = new Date(now.getFullYear(), now.getMonth() + i, 1);
     points.push({ month: month.toLocaleString(undefined, { month: "short" }), risk: Math.round(risk) });
   }
 
-  return {
-    doomPercent,
-    confidence,
-    cause,
-    predicted,
-    never,
-    points,
-  };
+  return { doomPercent, confidence, cause, predicted, never, points };
 }
 
-function useSeed(initialName = "Deniutsh") {
+function useSeed(initialName = "Deniusth") {
   const [seed, setSeed] = useState<string>("");
-
   useEffect(() => {
     const fromQuery = getQuerySeed();
-    const daily = `${initialName}-${new Date().toDateString()}`; // stable today
+    const daily = `${initialName}-${new Date().toDateString()}`;
     const s = fromQuery || daily;
     setSeed(s);
     if (!fromQuery) setQuerySeed(encodeURIComponent(s));
   }, [initialName]);
-
   const reseed = () => {
     const s = `${initialName}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setSeed(s);
     setQuerySeed(encodeURIComponent(s));
   };
-
   return { seed, reseed };
 }
 
 export default function App() {
-  const character = "Deniutsh"; // spelled per request
+  const character = "Deniusth";
   const { seed, reseed } = useSeed(character);
-  const prophecy = useMemo(() => (seed ? buildProphecy(seed) : null), [seed]);
+  const [spoilers, setSpoilers] = useState(true);
+  const prophecy = useMemo(() => (seed ? buildProphecy(seed, spoilers) : null), [seed, spoilers]);
   const [copied, setCopied] = useState(false);
 
   const share = async () => {
@@ -195,126 +164,155 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+    <div className="min-h-screen w-full paper-bg">
       <div className="max-w-5xl mx-auto px-4 py-10 md:py-14">
         {/* Header */}
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <motion.div initial={{ rotate: -10, scale: 0.9 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", stiffness: 220, damping: 14 }} className="p-2 rounded-2xl bg-slate-800/70 shadow-inner">
-              <Skull className="w-6 h-6" aria-hidden />
+            <motion.div
+              initial={{ y: -12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 160, damping: 16 }}
+              className="p-2 rounded-md border bg-white/80"
+              aria-hidden
+            >
+              <Feather className="w-6 h-6" color="#7a1e0a" />
             </motion.div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">whenwill{character.toLowerCase()}die<span className="opacity-70">.com</span></h1>
-              <p className="text-slate-400 text-sm md:text-base">Bad predictions, good vibes. 100% spoiler-safe and extremely scientific.*</p>
+              <h1 className="display-serif text-3xl md:text-4xl font-extrabold tracking-tight" style={{ color: "#7a1e0a" }}>
+                whenwill{character.toLowerCase()}die<span className="opacity-70">.com</span>
+              </h1>
+              <p className="text-stone-700 text-sm md:text-base">A very serious Innworld divination engine. Contains jokes. May contain spoilers.</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {BADGES.slice(0, 3).map((b) => (
-              <span key={b.label} className={`hidden md:inline-block text-xs px-2.5 py-1 rounded-full border border-white/5 ${b.class}`}>{b.label}</span>
-            ))}
+          <div className="flex items-center gap-2 text-sm">
+            <button
+              onClick={() => setSpoilers((s) => !s)}
+              className="btn-ghost"
+              aria-pressed={spoilers}
+              title="Toggle spoilers"
+            >
+              {spoilers ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              {spoilers ? "Spoilers: ON" : "Spoilers: OFF"}
+            </button>
+            <button onClick={share} className="btn-ghost">
+              <Share2 className="w-4 h-4" />
+              Share
+            </button>
           </div>
         </header>
 
-        {/* Hero */}
-        <section className="mt-8 grid grid-cols-1 md:grid-cols-5 gap-5">
-          {/* Prophecy Card */}
-          <motion.div layout className="md:col-span-3 rounded-2xl bg-slate-900/60 border border-white/5 shadow-xl overflow-hidden">
-            <div className="p-5 md:p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <CalendarIcon className="w-5 h-5 text-slate-400" />
-                <h2 className="text-lg font-semibold">The Prophecy</h2>
-              </div>
+        <div className="my-4 hr-quill rounded" />
 
-              {!prophecy ? (
-                <div className="animate-pulse h-24 bg-slate-800/40 rounded-xl" />
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                      <p className="text-slate-400 text-sm">Predicted date for <span className="font-semibold text-slate-200">{character}</span>:</p>
-                      <p className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                        {prophecy.never ? "NEVER (probably)" : fmtDate(prophecy.predicted)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-slate-400 text-xs">Confidence</p>
-                      <p className="text-xl font-bold">{prophecy.confidence}%</p>
-                    </div>
-                  </div>
+        {/* Hero blurb */}
+        <section className="paper-card rounded-lg p-6 md:p-8">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="w-5 h-5" />
+            <h2 className="display-serif text-xl font-bold">Reading the Threads</h2>
+          </div>
+          <p className="dropcap text-stone-800 leading-relaxed">
+            The Duelist of Strings steps onto a new stage in the New Lands; the audience includes storms, doors, and destiny itself.
+            Our reputable augurs roll dice, squint at tea leaves, and consult a Door before presenting this very accurate forecast.
+          </p>
+        </section>
 
-                  <div className="rounded-xl bg-slate-800/60 p-4 border border-white/5">
-                    <div className="flex items-center gap-2 text-slate-300"><Sparkles className="w-4 h-4" /><span className="text-sm">Cause (spoiler-free):</span></div>
-                    <p className="mt-1 text-base md:text-lg">{prophecy.cause}</p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button onClick={reseed} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[.99] transition shadow-md">
-                      <Dice5 className="w-4 h-4" />
-                      Spin prophecy
-                    </button>
-                    <button onClick={share} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 transition">
-                      <Share2 className="w-4 h-4" />
-                      Copy shareable link
-                    </button>
-                    {copied && <span className="text-sm text-emerald-400">Link copied!</span>}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="px-5 md:px-6 py-3 text-[11px] text-slate-400/80 bg-slate-950/40 border-t border-white/5 flex items-center gap-2">
-              <Info className="w-3.5 h-3.5" />
-              *This is a parody for a fictional character. No spoilers, no ill will. Refresh for new RNG!
-            </div>
-          </motion.div>
-
-          {/* Doom Meter */}
-          <motion.div layout className="md:col-span-2 rounded-2xl bg-slate-900/60 border border-white/5 shadow-xl p-5 md:p-6">
+        {/* Forecast & Meter */}
+        <section className="grid grid-cols-1 md:grid-cols-5 gap-5 mt-6">
+          {/* Prophecy */}
+          <div className="paper-card rounded-lg p-6 md:col-span-3">
             <div className="flex items-center gap-2 mb-3">
-              <Skull className="w-5 h-5 text-slate-400" />
-              <h2 className="text-lg font-semibold">Doom‑O‑Meter</h2>
+              <CalendarIcon className="w-5 h-5" />
+              <h3 className="display-serif text-lg font-semibold">The Divination</h3>
             </div>
             {!prophecy ? (
-              <div className="animate-pulse h-20 bg-slate-800/40 rounded-xl" />
+              <div className="animate-pulse h-24 rounded bg-stone-200" />
             ) : (
-              <div>
-                <div className="text-4xl font-black tracking-tight">{prophecy.doomPercent}<span className="text-slate-400 text-xl">%</span></div>
-                <div className="h-3 w-full bg-slate-800/60 rounded-full mt-3 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-pink-500"
-                    style={{ width: `${prophecy.doomPercent}%` }}
-                  />
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-stone-600 text-sm">
+                      Predicted fate‑date for <span className="font-semibold">{character}</span>:
+                    </p>
+                    <p className="text-3xl md:text-4xl display-serif font-extrabold tracking-tight" style={{ color: "#7a1e0a" }}>
+                      {prophecy.never ? "NEVER (probably)" : fmtDate(prophecy.predicted)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-stone-500 text-xs">Confidence</p>
+                    <p className="text-xl font-bold">{prophecy.confidence}%</p>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-slate-400">Totally legitimate risk estimate derived from tea leaves, vibes, and one (1) dice roll.</p>
-                <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-                  {BADGES.map((b) => (
-                    <span key={b.label} className={`text-center px-2 py-1 rounded-lg border border-white/5 ${b.class}`}>{b.label}</span>
-                  ))}
+
+                <div className="rounded-md border bg-white/70 p-4">
+                  <div className="flex items-center gap-2 text-stone-700">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="text-sm">Most likely cause:</span>
+                  </div>
+                  <p className="mt-1 text-base md:text-lg">{prophecy.cause}</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button onClick={reseed} className="btn-primary">
+                    <Swords className="w-4 h-4" />
+                    Spin a new fate
+                  </button>
+                  {copied && <span className="text-sm text-emerald-700">Link copied!</span>}
                 </div>
               </div>
             )}
-          </motion.div>
+          </div>
+
+          {/* Fate Thread Tension */}
+          <div className="paper-card rounded-lg p-6 md:col-span-2">
+            <div className="flex items-center gap-2 mb-3">
+              <Feather className="w-5 h-5" />
+              <h3 className="display-serif text-lg font-semibold">Fate Thread Tension</h3>
+            </div>
+            {!prophecy ? (
+              <div className="animate-pulse h-20 rounded bg-stone-200" />
+            ) : (
+              <div>
+                <div className="text-4xl display-serif font-black tracking-tight" style={{ color: "#b3862b" }}>
+                  {prophecy.doomPercent}
+                  <span className="text-stone-500 text-xl">%</span>
+                </div>
+                <div className="h-3 w-full bg-stone-200 rounded-full mt-3 overflow-hidden">
+                  <div
+                    className="h-full"
+                    style={{
+                      width: `${prophecy.doomPercent}%`,
+                      background:
+                        "linear-gradient(90deg, #b3862b, #7a1e0a)",
+                    }}
+                  />
+                </div>
+                <p className="mt-2 text-sm text-stone-600">
+                  Totally legitimate estimate based on tea leaves, vibes, and a Door’s opinion.
+                </p>
+              </div>
+            )}
+          </div>
         </section>
 
-        {/* Timeline Chart */}
-        <section className="mt-6 rounded-2xl bg-slate-900/60 border border-white/5 shadow-xl p-5 md:p-6">
+        {/* Timeline */}
+        <section className="paper-card rounded-lg p-6 mt-6">
           <div className="flex items-center gap-2 mb-3">
-            <Swords className="w-5 h-5 text-slate-400" />
-            <h2 className="text-lg font-semibold">Prophetic Timeline (next 12 months)</h2>
+            <Swords className="w-5 h-5" />
+            <h3 className="display-serif text-lg font-semibold">Next Twelve Moons</h3>
           </div>
           {!prophecy ? (
-            <div className="animate-pulse h-56 bg-slate-800/40 rounded-xl" />
+            <div className="animate-pulse h-56 rounded bg-stone-200" />
           ) : (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={prophecy.points} margin={{ left: 8, right: 12, top: 12, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                  <XAxis dataKey="month" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                  <YAxis stroke="#94a3b8" allowDecimals={false} domain={[0, 100]} tick={{ fontSize: 12 }} />
-                  <Tooltip contentStyle={{ background: "#0b1220", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12 }} labelStyle={{ color: "#cbd5e1" }} />
-                  <Line type="monotone" dataKey="risk" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 3, stroke: "#111827" }} activeDot={{ r: 5 }} />
-                  <ReferenceLine y={50} stroke="#334155" strokeDasharray="4 4" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5dccb" />
+                  <XAxis dataKey="month" stroke="#705d43" tick={{ fontSize: 12 }} />
+                  <YAxis stroke="#705d43" allowDecimals={false} domain={[0, 100]} tick={{ fontSize: 12 }} />
+                  <Tooltip contentStyle={{ background: "#fffdf8", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, color: "#2b2b2b" }} labelStyle={{ color: "#2b2b2b" }} />
+                  <Line type="monotone" dataKey="risk" stroke="#7a1e0a" strokeWidth={3} dot={{ r: 3, stroke: "#cdbfa5" }} activeDot={{ r: 5 }} />
+                  <ReferenceLine y={50} stroke="#b3862b" strokeDasharray="4 4" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -322,18 +320,10 @@ export default function App() {
         </section>
 
         {/* Footer */}
-        <footer className="mt-8 md:mt-10 text-sm text-slate-400">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <p>
-              Built with love for readers. Character names are property of their creator. This page is a joke and avoids spoilers.
-            </p>
-            <div className="flex items-center gap-2">
-              <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 transition">
-                <RefreshCw className="w-4 h-4" />
-                Back to top
-              </button>
-            </div>
-          </div>
+        <footer className="mt-8 md:mt-10 text-sm text-stone-600">
+          <p>
+            Fan‑made parody. Not affiliated with the author of <em>The Wandering Inn</em>. Names belong to their creator. Spoilers may appear when enabled.
+          </p>
         </footer>
       </div>
     </div>
