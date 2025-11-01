@@ -4,12 +4,10 @@ import {
   Feather, Share2, BookOpen, Calendar as CalendarIcon, Sparkles, Eye, EyeOff, UserPlus, BarChart2,
 } from "lucide-react";
 import {
-  ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, BarChart, Bar,
+  ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine,
 } from "recharts";
-import { DAY_NAMES, MONTHS, monthLabel, dayLabel, DAYS_PER_MONTH } from "./calendar";
+import { DAY_NAMES, MONTHS, monthLabel, dayLabel } from "./calendar";
 import { fetchData, postSubmission, type Submission } from "./api";
-
-/** v3: Crowd-sourced predictions; graph uses ONLY user data. Innworld calendar everywhere. */
 
 type FormState = {
   username: string;
@@ -28,7 +26,7 @@ const DEFAULT_FORM: FormState = {
   probability: 50,
   era: "AF",
   year: undefined,
-  month_index: 9,      // Evium as default
+  month_index: 9,
   day_of_month: 1,
   day_of_week_index: 1,
 };
@@ -76,7 +74,7 @@ export default function App() {
       };
       await postSubmission(payload as any);
       await load();
-      setForm({ ...DEFAULT_FORM, username: form.username }); // keep name for convenience
+      setForm({ ...DEFAULT_FORM, username: form.username });
     } catch (e: any) {
       alert(e?.message || "Submit failed");
     } finally {
@@ -84,14 +82,12 @@ export default function App() {
     }
   };
 
-  // Build chart datasets purely from server data
   const monthAverages = useMemo(() => {
     if (!data) return [];
     const map = new Map<number, { month_name: string; sum: number; count: number }>();
     for (const a of data.aggregates) {
       map.set(a.month_index, { month_name: a.month_name, sum: a.avg_probability * a.count, count: a.count });
     }
-    // Ensure stable x-axis: always 1..16; show 0 if missing
     return MONTHS.map(m => ({
       month_index: m.index,
       month_name: m.name,
@@ -105,7 +101,6 @@ export default function App() {
   return (
     <div className="min-h-screen w-full paper-bg">
       <div className="max-w-5xl mx-auto px-4 py-10 md:py-14">
-        {/* Header */}
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <motion.div initial={{ y: -12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 160, damping: 16 }} className="p-2 rounded-md border bg-white/80" aria-hidden>
@@ -115,27 +110,22 @@ export default function App() {
               <h1 className="display-serif text-3xl md:text-4xl font-extrabold tracking-tight" style={{ color: "#7a1e0a" }}>
                 whenwill{character.toLowerCase()}die<span className="opacity-70">.com</span>
               </h1>
-              <p className="text-stone-700 text-sm md:text-base">
-                Crowd‑sourced Innworld divinations. Real data only — no mock prophecies.
-              </p>
+              <p className="text-stone-700 text-sm md:text-base">Crowd‑sourced Innworld divinations. Real data only — no mock prophecies.</p>
             </div>
           </div>
-
           <div className="flex items-center gap-2 text-sm">
             <button onClick={() => setSpoilers(s => !s)} className="btn-ghost" aria-pressed={spoilers} title="Toggle spoilers">
               {spoilers ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
               {spoilers ? "Spoilers: ON" : "Spoilers: OFF"}
             </button>
             <button onClick={() => navigator.clipboard.writeText(window.location.href)} className="btn-ghost">
-              <Share2 className="w-4 h-4" />
-              Share
+              <Share2 className="w-4 h-4" /> Share
             </button>
           </div>
         </header>
 
         <div className="my-4 hr-quill rounded" />
 
-        {/* Submit form */}
         <section className="paper-card rounded-lg p-6 md:p-8">
           <div className="flex items-center gap-2 mb-3">
             <UserPlus className="w-5 h-5" />
@@ -172,7 +162,7 @@ export default function App() {
 
             <label className="col-span-1 flex flex-col gap-1">
               <span className="text-sm text-stone-700">Day of Month (1–32)</span>
-              <input type="number" min={1} max={DAYS_PER_MONTH} value={form.day_of_month} onChange={e=>setForm({...form, day_of_month: Number(e.target.value)})} className="border rounded-md p-2 bg-white/80" />
+              <input type="number" min={1} max={32} value={form.day_of_month} onChange={e=>setForm({...form, day_of_month: Number(e.target.value)})} className="border rounded-md p-2 bg-white/80" />
             </label>
 
             <label className="col-span-3 md:col-span-1 flex flex-col gap-1">
@@ -197,7 +187,6 @@ export default function App() {
           </form>
         </section>
 
-        {/* Charts from REAL data */}
         <section className="grid grid-cols-1 md:grid-cols-5 gap-5 mt-6">
           <div className="paper-card rounded-lg p-6 md:col-span-3">
             <div className="flex items-center gap-2 mb-3">

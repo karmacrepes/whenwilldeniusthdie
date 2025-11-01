@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,34 +31,16 @@ html, body, #root { height: 100%; }
 .paper-card {
   background: linear-gradient(180deg, #f9f4ea, #f2e7d5);
   border: 1px solid rgba(0,0,0,0.06);
-  box-shadow:
-    0 6px 20px rgba(0,0,0,0.08),
-    0 1px 0 rgba(255,255,255,0.8) inset;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.8) inset;
 }
 
-.hr-quill {
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--paper-gold), transparent);
-}
+.hr-quill { height: 2px; background: linear-gradient(90deg, transparent, var(--paper-gold), transparent); }
 
 .dropcap:first-letter{
-  float: left;
-  font-family: "Playfair Display";
-  font-size: 3.2rem;
-  line-height: 1;
-  padding-right: .25rem;
-  color: var(--paper-accent);
+  float: left; font-family: "Playfair Display"; font-size: 3.2rem; line-height: 1; padding-right: .25rem; color: var(--paper-accent);
 }
 
-.btn-primary {
-  @apply inline-flex items-center gap-2 rounded-md px-4 py-2 border transition;
-  background: #fff4e5;
-  border-color: rgba(0,0,0,0.1);
-}
+.btn-primary { @apply inline-flex items-center gap-2 rounded-md px-4 py-2 border transition; background: #fff4e5; border-color: rgba(0,0,0,0.1); }
 .btn-primary:hover { background: #ffefd6; }
-.btn-ghost {
-  @apply inline-flex items-center gap-2 rounded-md px-3 py-2 border transition;
-  background: #f7f0e3;
-  border-color: rgba(0,0,0,0.06);
-}
+.btn-ghost { @apply inline-flex items-center gap-2 rounded-md px-3 py-2 border transition; background: #f7f0e3; border-color: rgba(0,0,0,0.06); }
 .btn-ghost:hover { background: #efe6d7; }
